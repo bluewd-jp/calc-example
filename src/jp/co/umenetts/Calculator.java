@@ -8,72 +8,29 @@ public class Calculator {
 
     // 公開関数 ///////////////////////////////////////////////////////////
     /**
-     *
-     * @param expression 数式の文字列
-     * @return 数式文字列に不正な値があればFalseを返却。妥当な値であればTrueを返却。
-     */
-    public boolean validate(String expression) {
-        // 空入力チェック
-        if(expression == null || expression.isEmpty()) {
-            System.out.println("数式が未入力です。");
-            return false;
-        }
-
-        // 文字種チェック
-        for (int i = 0; i < expression.length(); i++) {
-            var item = expression.substring(i, i+1);
-
-            if (!ValidationUtils.isOperator(item)
-                    && !ValidationUtils.isNumberCharacter(item)
-                    && !ValidationUtils.isDecimalPoint(item)
-                    && !ValidationUtils.isBrackets(item)) {
-                System.out.println("数式に不適切な文字が含まれています：" + item);
-                return false;
-            }
-        }
-
-        var expressionList = _createExpressionList(expression);
-
-        // 括弧の対応関係チェック
-        if (!ValidationUtils.isValidBrackets(expressionList)) {
-            System.out.println("括弧の対応関係が不正です。");
-            return false;
-        }
-
-        // 空括弧のチェック
-        if (ValidationUtils.hasEmptyBrackets(expressionList)) {
-            System.out.println("空の括弧が使用されています。");
-            return false;
-        }
-
-        // 数式全体の形式チェック
-        if (!ValidationUtils.isValidExpression(expressionList)) {
-            System.out.println("不正な数式です。");
-            return false;
-        }
-
-        return true;
-    }
-
-
-    /**
      * 使用者に公開している計算処理
      * @param expression 数式の文字列
      * @return 計算結果
      */
-    public BigDecimal calculate(String expression) {
-        var expressionList = _createExpressionList(expression);
-        return _calculate(expressionList);
+    public BigDecimal calculate(Expression expression) {
+        try {
+            return _calculate(expression);
+        } catch (NotValidatedException e) {
+            e.printStackTrace();
+            return BigDecimal.ZERO;
+        }
     }
-
 
     // 非公開関数 ////////////////////////////////////////////////////////
     /**
      * メインの計算処理
-     * @param expressionList リストにまとめた数式
+     * @param expression Expression
      * @return 計算結果
      */
-    private BigDecimal _calculate(List<String> expressionList) {
+    private BigDecimal _calculate(Expression expression)
+            throws NotValidatedException {
+        var expressionList = expression.toList();
+
         // 括弧の計算
         _calculateBrackets(expressionList);
 
@@ -112,7 +69,14 @@ public class Calculator {
 
         // 括弧がなければ計算
         // subListで抽出したリストは抽出元リストと値を共有しているので、この処理で 1 * ( 計算結果 ) / 3 の状態になる
-        _calculate(tmpList);
+        try {
+            _calculate(new Expression(tmpList));
+        } catch (NotValidatedException e) {
+            // 当例外はExpressionインスタンスの_expressionListフィールドに値が設定されていないときに発生する。
+            // リストを直接引数にとってインスタンス化した場合は事実上発生しないため、
+            // 想定外のときのためにスタックトレースを出力する以外に処理はおこなわない。
+            e.printStackTrace();
+        }
 
         // 左右の括弧を削除
         expressionList.remove(leftBracketIndex); // この結果 1 * 計算結果 ) / 3 の状態になる
@@ -197,46 +161,5 @@ public class Calculator {
                     break;
             }
         }
-    }
-
-
-    /**
-     * 入力された数式をリスト化する処理
-     * @param expression 数式の文字列
-     * @return 数式のリスト
-     */
-    private List<String> _createExpressionList(String expression) {
-        var numStr = "";
-        var expressionList = new ArrayList<String>();
-
-        for (int i = 0; i < expression.length(); i++) {
-            var item = expression.substring(i, i+1);
-
-            if(ValidationUtils.isNumberCharacter(item) || ValidationUtils.isDecimalPoint(item)) {
-                numStr += item;
-            }
-            else if(ValidationUtils.isOperator(item)) {
-                if (!numStr.isEmpty()) {
-                    expressionList.add(numStr);
-                    numStr = "";
-                }
-                expressionList.add(item);
-            }
-            else if (ValidationUtils.isLeftBracket(item)) {
-                expressionList.add(item);
-            }
-            else if (ValidationUtils.isRightBracket(item)) {
-                if (!numStr.isEmpty()) {
-                    expressionList.add(numStr);
-                    numStr = "";
-                }
-                expressionList.add(item);
-            }
-        }
-
-        // 一番最後の数値文字の追加
-        expressionList.add(numStr);
-
-        return expressionList;
     }
 }
