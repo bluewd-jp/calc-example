@@ -19,6 +19,12 @@ public class Calculator {
             return false;
         }
 
+        // 空白区切りで式の入力があったときのエラーがわかりずらいため別途検査
+        if (expression.trim().contains(" ")) {
+            System.out.println("数式に空白が含まれています。数式は空白を含まないかたち( 例:(1+2)*3/4 )で入力してください。");
+            return false;
+        }
+
         // 文字種チェック
         for (int i = 0; i < expression.length(); i++) {
             var item = expression.substring(i, i+1);
