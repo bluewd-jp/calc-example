@@ -20,9 +20,14 @@ public class Main {
                 hasError = !calculator.validate(text);
             } while (hasError);
 
-            System.out.println("計算結果：" + calculator.calculate(text));
+            try {
+                System.out.println("計算結果：" + calculator.calculate(text));
+            } catch (ArithmeticException e) {
+                System.out.println(e.getMessage()); // ゼロ除算があった場合の処理を想定
+            }
         }
 
+        sc.close();
         System.out.println("計算処理を終了します。");
     }
 }

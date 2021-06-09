@@ -61,7 +61,7 @@ public class Calculator {
      * @param expression 数式の文字列
      * @return 計算結果
      */
-    public BigDecimal calculate(String expression) {
+    public BigDecimal calculate(String expression) throws ArithmeticException {
         var expressionList = _createExpressionList(expression);
         return _calculate(expressionList);
     }
@@ -73,7 +73,7 @@ public class Calculator {
      * @param expressionList リストにまとめた数式
      * @return 計算結果
      */
-    private BigDecimal _calculate(List<String> expressionList) {
+    private BigDecimal _calculate(List<String> expressionList) throws ArithmeticException {
         // 括弧の計算
         _calculateBrackets(expressionList);
 
@@ -83,11 +83,6 @@ public class Calculator {
         // 和差の計算
         _calculateAddSub(expressionList);
 
-        // ゼロ除算があった場合、空のリストが来るようになっている。このときは計算できないためゼロを返す。
-        if (expressionList.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-
         return new BigDecimal(expressionList.get(0));
     }
 
@@ -96,7 +91,7 @@ public class Calculator {
      * 括弧内の計算処理。括弧がなくなるまで計算する。
      * @param expressionList 数式のリスト
      */
-    private void _calculateBrackets(List<String> expressionList) {
+    private void _calculateBrackets(List<String> expressionList) throws ArithmeticException {
         // 括弧がなければ終了
         if (!ValidationUtils.hasBrackets(expressionList)) return;
 
@@ -124,7 +119,7 @@ public class Calculator {
      * 乗除の計算処理
      * @param expressionList 数式のリスト
      */
-    private void _calculateMulDiv(List<String> expressionList) {
+    private void _calculateMulDiv(List<String> expressionList) throws ArithmeticException {
         for (int i = 0; i < expressionList.size() ; /* not increment */) {
             var item = expressionList.get(i);
             var left = BigDecimal.ZERO;
@@ -146,7 +141,7 @@ public class Calculator {
 
                     if (right.equals(BigDecimal.ZERO)) {
                         // ゼロ除算があった場合は計算できないため、空のリストを返却
-                        System.out.println("ゼロによる除算が確認されたため計算を中止します。");
+                        throw new ArithmeticException("ゼロによる除算が確認されたため計算を中止します。");
                     }
 
                     expressionList.set(i - 1, left.divide(right).toString());
