@@ -81,7 +81,9 @@ public class Calculator {
      */
     private BigDecimal _calculate(List<String> expressionList) throws ArithmeticException {
         // 括弧の計算
-        _calculateBrackets(expressionList);
+        while(ValidationUtils.hasBrackets(expressionList)) {
+            _calculateBrackets(expressionList);
+        }
 
         // 乗除の計算
         _calculateMulDiv(expressionList);
@@ -103,7 +105,7 @@ public class Calculator {
 
         // 括弧があれば、括弧の中の式を抽出
         int leftBracketIndex = expressionList.indexOf("(");
-        int rightBracketIndex = expressionList.lastIndexOf(")");
+        int rightBracketIndex = _getRightBracketIndex(expressionList, leftBracketIndex);
         var tmpList = expressionList.subList(leftBracketIndex + 1, rightBracketIndex);
 
         // 抽出した式の中に括弧があれば再帰呼び出し
@@ -117,7 +119,9 @@ public class Calculator {
 
         // 左右の括弧を削除
         expressionList.remove(leftBracketIndex); // この結果 1 * 計算結果 ) / 3 の状態になる
-        expressionList.remove(leftBracketIndex + 1); // この結果 1 * 計算結果 / 3 の状態になる
+        if (leftBracketIndex + 1 < expressionList.size()) {
+            expressionList.remove(leftBracketIndex + 1); // この結果 1 * 計算結果 / 3 の状態になる
+        }
     }
 
 
@@ -236,8 +240,33 @@ public class Calculator {
         }
 
         // 一番最後の数値文字の追加
-        expressionList.add(numStr);
+        if (!numStr.isEmpty()) {
+            expressionList.add(numStr);
+        }
 
         return expressionList;
+    }
+
+    private int _getRightBracketIndex(List<String> expressionList, int leftBracketIndex) {
+        // 左括弧を見つけた場合にカウントアップ。右括弧を見つけた場合にカウントダウン。
+        // 途中で左括弧があれば、その分だけ右括弧が見つかるまでループする
+        int leftBracketCount = 1; // 呼び出し時点で1つは左括弧が見つかっているので 1 。
+
+        for (int i = leftBracketIndex + 1; i < expressionList.size(); i++) {
+            var item = expressionList.get(i);
+            
+            if (ValidationUtils.isLeftBracket(item)) {
+                leftBracketCount++;
+                continue;
+            }
+            
+            if (ValidationUtils.isRightBracket(item)) {
+                leftBracketCount--;
+                if (leftBracketCount == 0) { // 左括弧の残数が0になったらこの位置を返却
+                    return i;
+                }
+            }
+        }
+        return expressionList.size(); // 予めバリデーションをしている以上、ここまで来るケースはないはず。
     }
 }
